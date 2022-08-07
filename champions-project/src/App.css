@@ -51,11 +51,6 @@
   border: 1px solid #ccc;
 }
 
-.Reset-Button {
-  width: 20;
-  height: 10;
-}
-
 .Error-Message {
   color: orangered;
 }

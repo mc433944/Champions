@@ -3,7 +3,7 @@ import InputBox from './common/InputBox';
 import TableData from './common/TableData';
 import React, { useState } from 'react';
 
-//labelTitle, text, handleSubmit, handleChange
+
 function App() {
   const [teams, setTeams] = useState("");
   const [matchResults, setMatchResults] = useState("");
@@ -17,16 +17,19 @@ function App() {
   const [errMsg, setErrMsg] = useState("");
 
   const doTeamUpdate = (event) => {
-    console.log("DoTeamUpdateTeams:",{...teams.replaceAll("\n"," ").split(" ").slice(0, -1)});
+
     let isDataInvalid = false;
     const teamElementArr = [...teams.replaceAll("\n"," ").split(" ").slice(0, -1)];
     const teamInformationArr = [];
     const matchElementArr = [...matchResults.replaceAll("\n"," ").split(" ").slice(0, -1)];
     const matchResultsArr = [];
 
-    if(teamElementArr.length === 0 || matchElementArr.length === 0) {
+    if(teamElementArr.length !== 36 
+        || matchElementArr.length !== 120
+        || teamElementArr.find(element => element === "") !== undefined
+        || matchElementArr.find(element => element === "") !== undefined) {
       isDataInvalid = true;
-      setErrMsg("Please provide inputs for both Team Information and Match Results.");
+      setErrMsg("Please provide proper inputs for both Team Information and Match Results.");
     }
 
     for(var i = 0; i < Object.keys(teamElementArr).length && !isDataInvalid; i+=3) {
@@ -47,20 +50,14 @@ function App() {
         || (currTeam.name.split(" ").length > 1);
 
       if(isDataInvalid) {
-        // isValidData = false;
-        console.log("NAN is called");
         setErrMsg("Please ensure inputs given for Team Information explicitly follows the syntax with spaces only between each <>")
         break;
       }
-      console.log("a[0]:", Number(currTeam.name));
-      console.log("a[0]:", typeof currTeam.points);
       teamInformationArr.push(currTeam);
     }
 
-    console.log("teamInfoArr:",teamInformationArr);
-    ////
-    const updatedTeamScore = [...teamInformationArr];
 
+    const updatedTeamScore = [...teamInformationArr];
     
     for(var n = 0; n < Object.keys(matchElementArr).length && !isDataInvalid; n+=4) {
       const currMatch = {
@@ -77,8 +74,6 @@ function App() {
         || (currMatch.opponentName.split(" ").length > 1);
 
       if(isDataInvalid) {
-        // isValidData = false;
-        console.log("NAN is called");
         setErrMsg("Please ensure that there are no spaces in team names and goals entered are numbers only in Match Results.")
         break;
       }
@@ -113,8 +108,7 @@ function App() {
           opponentTeamToBeUpdated.goals += currMatch.opponentGoal;
           opponentTeamToBeUpdated.alternatePoints += 5;
         }
-        // console.log("baseTeamToUpdate:",baseTeamToBeUpdated);
-        // console.log("oppTeamToUpdate:",opponentTeamToBeUpdated);
+
       } else {
         isDataInvalid = true;
         setErrMsg("Please ensure that team name entered in Match Results matches team name in Team Information.");
@@ -123,18 +117,12 @@ function App() {
     }
 
     if(!isDataInvalid){
-      const teamOne = sortThisArray([...updatedTeamScore.filter(team => team.groupNum === 1)]);
-      const teamTwo = sortThisArray([...updatedTeamScore.filter(team => team.groupNum === 2)]);
-      const finalUpdatedTeamScore = [...teamOne, ...teamTwo];
-      const teamsAdvanced = [...teamOne.slice(0, -2), ...teamTwo.slice(0,-2)];
+      const groupOneTeams = sortThisArray([...updatedTeamScore.filter(team => team.groupNum === 1)]);
+      const groupTwoTeams = sortThisArray([...updatedTeamScore.filter(team => team.groupNum === 2)]);
+      const sortedUpdatedTeamScore = [...groupOneTeams, ...groupTwoTeams];
+      const teamsAdvanced = [...groupOneTeams.slice(0, -2), ...groupTwoTeams.slice(0,-2)];
   
-      console.log("TeamsAdvanced:",teamsAdvanced);
-          
-      console.log("UpdateTemp:",updatedTeamScore);
-      console.log("UpdateMatch:",matchResultsArr);
-
-
-      setFinalTeamResults(finalUpdatedTeamScore);
+      setFinalTeamResults(sortedUpdatedTeamScore);
       setQualifiedTeamsResults(teamsAdvanced);
       setSubmittedTeams(updatedTeamScore);
       setSubmittedMatchResults(matchResultsArr);
@@ -188,45 +176,19 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        {/* <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a> */}
         
         <h1>GovTech Football Championship</h1>
-        
-          {/* {qualifiedTeamsResults.map((team, i) => {
-            return (
-              <div key={i}>
-                <h1>{team.name}</h1>
-                <h1>{team.date}</h1>
-                <h1>{team.groupNum}</h1>
-                <h3>{team.goals}</h3>
-              </div>
-            )
-          })} */}
-          
-        
+        <br />
+        <br />
         <div>
           {errMsg ? <h3 className="Error-Message">{errMsg}</h3> : null}
           <form onSubmit={(event) => doTeamUpdate(event)}>
 
-            {submittedTeams.length === 0 ? 
-              <div>
-                <h3>Please enter 12 Team Information in the following syntax:</h3>
-                <h6>{"<"}Team A name{">"} {"<"}Team A registration date in DD/MM{">"} {"<"}Team A group number{">"}</h6>
-              </div>
-              :
-              null
-            }
+            {/* {submittedTeams.length === 0 ?  */}
+            <div>
+              <h3>Please enter 12 Team Information in the following syntax:</h3>
+              <h6>{"<"}Team A name{">"} {"<"}Team A registration date in DD/MM{">"} {"<"}Team A group number{">"}</h6>
+            </div>
        
             <InputBox 
               labelTitle="Team Information: "
@@ -234,16 +196,14 @@ function App() {
               handleChange={(event) => doTeamOnChange(event)}
             />
 
+            <br />
+            <br />
+            <br />
 
-
-            {submittedMatchResults.length === 0 ?
-              <div>
-                <h3>Please enter 12 Match Results in the following syntax:</h3>
-                <h6>{"<"}Team A name{">"} {"<"}Team B name{">"} {"<"}Team A goals scored{">"} {"<"}Team B goals scored{">"}</h6>
-              </div>
-              :
-              null
-            }
+            <div>
+              <h3>Please enter 30 Match Results in the following syntax:</h3>
+              <h6>{"<"}Team A name{">"} {"<"}Team B name{">"} {"<"}Team A goals scored{">"} {"<"}Team B goals scored{">"}</h6>
+            </div>
 
             <InputBox 
               labelTitle="Match results: "
@@ -255,9 +215,15 @@ function App() {
             <input type="submit" value="Submit" /> 
           </form>
           <button onClick={() => resetAll()}>Reset</button>
+
+          <br />
+          <br />
           <hr />
+          
           <TableData title="Qualified Teams" teamResults={qualifiedTeamsResults} />
+          
           <TableData title="All Teams" teamResults={finalTeamResults} />
+
         </div>
         
       </header>
