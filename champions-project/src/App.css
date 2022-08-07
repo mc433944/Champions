@@ -36,3 +36,26 @@
     transform: rotate(360deg);
   }
 }
+
+
+.Table-Style {
+  border: 1px solid #ccc;
+}
+
+.Table-Style > thead > tr > th {
+  border: 1px solid #ccc;
+  
+}
+
+.Table-Style > tbody > tr > td {
+  border: 1px solid #ccc;
+}
+
+.Reset-Button {
+  width: 20;
+  height: 10;
+}
+
+.Error-Message {
+  color: orangered;
+}

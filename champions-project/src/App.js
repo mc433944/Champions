@@ -1,6 +1,6 @@
-import logo from './logo.svg';
 import './App.css';
 import InputBox from './common/InputBox';
+import TableData from './common/TableData';
 import React, { useState } from 'react';
 
 //labelTitle, text, handleSubmit, handleChange
@@ -11,16 +11,25 @@ function App() {
   const [submittedTeams, setSubmittedTeams] = useState([]);
   const [submittedMatchResults, setSubmittedMatchResults] = useState([]);
 
-  const [winningTeams, setWinningTeams] = useState([]);
+  const [finalTeamResults, setFinalTeamResults] = useState([]);
+  const [qualifiedTeamsResults, setQualifiedTeamsResults] = useState([]);
 
   const [errMsg, setErrMsg] = useState("");
 
   const doTeamUpdate = (event) => {
     console.log("DoTeamUpdateTeams:",{...teams.replaceAll("\n"," ").split(" ").slice(0, -1)});
-    let isValidData = true;
+    let isDataInvalid = false;
     const teamElementArr = [...teams.replaceAll("\n"," ").split(" ").slice(0, -1)];
     const teamInformationArr = [];
-    for(var i = 0; i < Object.keys(teamElementArr).length; i+=3) {
+    const matchElementArr = [...matchResults.replaceAll("\n"," ").split(" ").slice(0, -1)];
+    const matchResultsArr = [];
+
+    if(teamElementArr.length === 0 || matchElementArr.length === 0) {
+      isDataInvalid = true;
+      setErrMsg("Please provide inputs for both Team Information and Match Results.");
+    }
+
+    for(var i = 0; i < Object.keys(teamElementArr).length && !isDataInvalid; i+=3) {
       const currTeam = {
         name: teamElementArr[i],
         date: teamElementArr[i+1],
@@ -31,12 +40,16 @@ function App() {
       }
 
       const dateElements = currTeam.date.split("/");
-      const isDateInvalid = (Number(dateElements[0]) !== Number(dateElements[0])) || (Number(dateElements[1]) !== Number(dateElements[1]));
+      isDataInvalid = (Number(dateElements[0]) !== Number(dateElements[0])) 
+        || (Number(dateElements[1]) !== Number(dateElements[1]))
+        || (currTeam.groupNum !== currTeam.groupNum)
+        || (currTeam.groupNum !== 1 && currTeam.groupNum !== 2)
+        || (currTeam.name.split(" ").length > 1);
 
-      if(isDateInvalid) {
-        isValidData = false;
+      if(isDataInvalid) {
+        // isValidData = false;
         console.log("NAN is called");
-        setErrMsg("Please ensure dates entered for Team Information are in the following format: DD/MM")
+        setErrMsg("Please ensure inputs given for Team Information explicitly follows the syntax with spaces only between each <>")
         break;
       }
       console.log("a[0]:", Number(currTeam.name));
@@ -48,23 +61,25 @@ function App() {
     ////
     const updatedTeamScore = [...teamInformationArr];
 
-    const matchElementArr = [...matchResults.replaceAll("\n"," ").split(" ").slice(0, -1)];
-    const matchResultsArr = [];
-    for(var i = 0; i < Object.keys(matchElementArr).length && isValidData; i+=4) {
+    
+    for(var n = 0; n < Object.keys(matchElementArr).length && !isDataInvalid; n+=4) {
       const currMatch = {
-        baseName: matchElementArr[i],
-        opponentName: matchElementArr[i+1],
-        baseGoal: Number(matchElementArr[i+2]),
-        opponentGoal: Number(matchElementArr[i+3]),
+        baseName: matchElementArr[n],
+        opponentName: matchElementArr[n+1],
+        baseGoal: Number(matchElementArr[n+2]),
+        opponentGoal: Number(matchElementArr[n+3]),
       }
       matchResultsArr.push(currMatch);
 
-      const isGoalInvalid = (currMatch.baseGoal !== currMatch.baseGoal) || (currMatch.opponentGoal !== currMatch.opponentGoal);
+      isDataInvalid = (currMatch.baseGoal !== currMatch.baseGoal) 
+        || (currMatch.opponentGoal !== currMatch.opponentGoal)
+        || (currMatch.baseName.split(" ").length > 1)
+        || (currMatch.opponentName.split(" ").length > 1);
 
-      if(isGoalInvalid) {
-        isValidData = false;
+      if(isDataInvalid) {
+        // isValidData = false;
         console.log("NAN is called");
-        setErrMsg("Please ensure goals entered in Match Results are numbers.")
+        setErrMsg("Please ensure that there are no spaces in team names and goals entered are numbers only in Match Results.")
         break;
       }
       
@@ -101,14 +116,35 @@ function App() {
         // console.log("baseTeamToUpdate:",baseTeamToBeUpdated);
         // console.log("oppTeamToUpdate:",opponentTeamToBeUpdated);
       } else {
-        isValidData = false;
-        setErrMsg("Please ensure that team name entered in Match Results tallys with Team Information.");
+        isDataInvalid = true;
+        setErrMsg("Please ensure that team name entered in Match Results matches team name in Team Information.");
         break;
       }
     }
 
-    if(isValidData){
-    const teamOne = [...updatedTeamScore.filter(team => team.groupNum === 1).sort((a,b) => {
+    if(!isDataInvalid){
+      const teamOne = sortThisArray([...updatedTeamScore.filter(team => team.groupNum === 1)]);
+      const teamTwo = sortThisArray([...updatedTeamScore.filter(team => team.groupNum === 2)]);
+      const finalUpdatedTeamScore = [...teamOne, ...teamTwo];
+      const teamsAdvanced = [...teamOne.slice(0, -2), ...teamTwo.slice(0,-2)];
+  
+      console.log("TeamsAdvanced:",teamsAdvanced);
+          
+      console.log("UpdateTemp:",updatedTeamScore);
+      console.log("UpdateMatch:",matchResultsArr);
+
+
+      setFinalTeamResults(finalUpdatedTeamScore);
+      setQualifiedTeamsResults(teamsAdvanced);
+      setSubmittedTeams(updatedTeamScore);
+      setSubmittedMatchResults(matchResultsArr);
+      setErrMsg("");
+    }
+    event.preventDefault();
+  }
+
+  const sortThisArray = (arr) => {
+    return arr.sort((a,b) => {
       if(a.points === b.points){
 
         if(a.goals === b.goals){
@@ -128,27 +164,7 @@ function App() {
         }
       }
       return a.points > b.points ? -1 : 1;
-    })];
-    const teamTwo = [...updatedTeamScore.filter(team => team.groupNum === 2).sort((a,b) => a.points > b.points ? -1 : 1)];
-
-    const teamsWon = [...teamOne.slice(0, -2), ...teamTwo.slice(0,-2)];
-  
-    console.log("TeamsWon:",teamsWon);
-
-    for(var k = 0; k < teamOne.length && isValidData; k++) {
-      console.log("teamOneArr:",teamOne[k])
-    }
-          
-    console.log("UpdateTemp:",updatedTeamScore);
-    console.log("UpdateMatch:",matchResultsArr);
-
-    ////
-    setWinningTeams(teamsWon);
-    setSubmittedTeams(updatedTeamScore);
-    setSubmittedMatchResults(matchResultsArr);
-    setErrMsg("");
-  }
-    event.preventDefault();
+    });
   }
 
   const doTeamOnChange = (event) => {
@@ -158,6 +174,17 @@ function App() {
   const doMatchResultsOnChange = (event) => {
     setMatchResults(event.target.value);
   }
+
+  const resetAll = () => {
+    setFinalTeamResults([]);
+    setQualifiedTeamsResults([]);
+    setSubmittedTeams([]);
+    setSubmittedMatchResults([]);
+    setMatchResults("");
+    setTeams("");
+    setErrMsg("");
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -173,47 +200,64 @@ function App() {
         >
           Learn React
         </a> */}
-        {errMsg ? <h3>{errMsg}</h3> : null}
-        <h1>length of {submittedTeams.length}</h1>
-        {submittedTeams.length > 0 ? <h1>active map</h1>:
-          <h1>Please enter 12 teams information:</h1>
-        }
-        {submittedMatchResults.length > 0 ? <h1>matchResults:{submittedMatchResults.length}</h1>:
-          <h1>Please enter 12 teams match results:</h1>
-        }
-          {winningTeams.map((team, i) => {
+        
+        <h1>GovTech Football Championship</h1>
+        
+          {/* {qualifiedTeamsResults.map((team, i) => {
             return (
               <div key={i}>
                 <h1>{team.name}</h1>
                 <h1>{team.date}</h1>
                 <h1>{team.groupNum}</h1>
+                <h3>{team.goals}</h3>
               </div>
             )
-          })}
+          })} */}
           
         
         <div>
+          {errMsg ? <h3 className="Error-Message">{errMsg}</h3> : null}
           <form onSubmit={(event) => doTeamUpdate(event)}>
-            <div>
-              <InputBox 
-                labelTitle="Team Information:"
-                text={teams}
-                // handleSubmit={(event) => doTeamUpdate(event)}
-                handleChange={(event) => doTeamOnChange(event)}
-              />
-            </div>
 
-            <div>
-              <InputBox 
-                labelTitle="Match results:"
-                text={matchResults}
-                // handleSubmit={(event) => doTeamUpdate(event)}
-                handleChange={(event) => doMatchResultsOnChange(event)}
-              />
-            </div>
+            {submittedTeams.length === 0 ? 
+              <div>
+                <h3>Please enter 12 Team Information in the following syntax:</h3>
+                <h6>{"<"}Team A name{">"} {"<"}Team A registration date in DD/MM{">"} {"<"}Team A group number{">"}</h6>
+              </div>
+              :
+              null
+            }
+       
+            <InputBox 
+              labelTitle="Team Information: "
+              text={teams}
+              handleChange={(event) => doTeamOnChange(event)}
+            />
+
+
+
+            {submittedMatchResults.length === 0 ?
+              <div>
+                <h3>Please enter 12 Match Results in the following syntax:</h3>
+                <h6>{"<"}Team A name{">"} {"<"}Team B name{">"} {"<"}Team A goals scored{">"} {"<"}Team B goals scored{">"}</h6>
+              </div>
+              :
+              null
+            }
+
+            <InputBox 
+              labelTitle="Match results: "
+              text={matchResults}
+              handleChange={(event) => doMatchResultsOnChange(event)}
+            />
+
         
             <input type="submit" value="Submit" /> 
           </form>
+          <button onClick={() => resetAll()}>Reset</button>
+          <hr />
+          <TableData title="Qualified Teams" teamResults={qualifiedTeamsResults} />
+          <TableData title="All Teams" teamResults={finalTeamResults} />
         </div>
         
       </header>
