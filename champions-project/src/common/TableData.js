@@ -2,7 +2,6 @@ import React from 'react';
 
 const TableData = (props) => {
   const {title, teamResults} = props
-  console.log("TeamResults:", teamResults);
 
   return (
     <div>
@@ -26,7 +25,6 @@ const TableData = (props) => {
               <tr key={i}>
                 <td>{team.groupNum}</td>
                 <td>{teamResults.length > 8 ? (i%6)+1 : (i%4)+1}</td>
-                {/* <td>{(i%4)+1}</td> */}
                 <td>{team.name}</td>
                 <td>{team.date}</td>
                 <td>{team.points}</td>
@@ -38,7 +36,7 @@ const TableData = (props) => {
         </tbody>
       </table>
       
-      
+      <br />
     </div>
   ) 
 }
