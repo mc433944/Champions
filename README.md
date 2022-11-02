@@ -1,1 +1,1 @@
-# Champions
+# Champions Project
